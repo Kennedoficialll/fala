@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1D1A17"/><stop offset="1" stop-color="#070605"/></linearGradient>
+<linearGradient id="gd" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFD98A"/><stop offset="1" stop-color="#E0782E"/></linearGradient>
+<radialGradient id="glow" cx="0.5" cy="0.55" r="0.5"><stop offset="0" stop-color="#E0782E" stop-opacity="0.35"/><stop offset="1" stop-color="#E0782E" stop-opacity="0"/></radialGradient>
+<clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186" ry="186"/></clipPath>
+</defs>
+<g clip-path="url(#sq)">
+<rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+<rect x="100" y="100" width="824" height="824" fill="url(#glow)"/>
+<rect x="300" y="300" width="72" height="424" rx="36" fill="url(#gd)"/>
+<rect x="404" y="300" width="320" height="72" rx="36" fill="url(#gd)"/><rect x="404" y="476" width="230" height="72" rx="36" fill="url(#gd)"/><rect x="404" y="652" width="120" height="72" rx="36" fill="url(#gd)"/>
+<circle cx="760" cy="688" r="36" fill="#E0782E" opacity="0.9"/>
+</g>
+<rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#fff" stroke-opacity="0.09" stroke-width="2"/></svg>

@@ -37,20 +37,22 @@ enum Whisper {
     }
 
     /// Texto corrido, para o ditado.
-    static func text(_ wav: URL) throws -> String {
-        try segments(wav).map(\.text).joined(separator: " ")
+    static func text(_ wav: URL, language: String, words: [String]) throws -> String {
+        try segments(wav, language: language, words: words).map(\.text).joined(separator: " ")
     }
 
     /// Trechos com horário, para a reunião.
-    static func segments(_ wav: URL) throws -> [Segment] {
+    static func segments(_ wav: URL, language: String, words: [String]) throws -> [Segment] {
         guard let cli else { throw FalaError("whisper-cli não encontrado. Instale com: brew install whisper-cpp") }
         guard hasModel else { throw FalaError("Modelo do Whisper não baixado. Use \"Baixar modelo\" no menu do Fala.") }
 
         let out = wav.deletingPathExtension()
         let p = Process()
         p.executableURL = URL(fileURLWithPath: cli)
-        p.arguments = ["-m", modelURL.path, "-l", "pt", "-f", wav.path, "-oj", "-of", out.path, "-np",
-                       "-t", String(max(4, ProcessInfo.processInfo.activeProcessorCount - 2))]
+        var args = ["-m", modelURL.path, "-l", language, "-f", wav.path, "-oj", "-of", out.path, "-np",
+                    "-t", String(max(4, ProcessInfo.processInfo.activeProcessorCount - 2))]
+        if !words.isEmpty { args += ["--prompt", words.joined(separator: ", ")] }  // dicionário: puxa a grafia certa
+        p.arguments = args
         p.standardOutput = FileHandle.nullDevice
         p.standardError = FileHandle.nullDevice
         try p.run()

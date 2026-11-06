@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFBF3"/><stop offset="1" stop-color="#EFE4CF"/></linearGradient>
+<linearGradient id="or" gradientUnits="userSpaceOnUse" x1="320" y1="190" x2="740" y2="860"><stop offset="0" stop-color="#FFA45B"/><stop offset="0.55" stop-color="#EC6A2C"/><stop offset="1" stop-color="#C2441A"/></linearGradient>
+<radialGradient id="hi" cx="0.3" cy="0.2" r="0.5"><stop offset="0" stop-color="#fff" stop-opacity="0.4"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<clipPath id="bub"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></clipPath><clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186" ry="186"/></clipPath>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="30"/></filter>
+</defs>
+<g clip-path="url(#sq)">
+<rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+<g transform="translate(0 30)" opacity="0.35" fill="#8A3A10" filter="url(#sh)"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></g>
+<g fill="url(#or)"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></g>
+<g clip-path="url(#bub)"><rect x="100" y="100" width="824" height="824" fill="url(#hi)"/></g>
+<rect x="392" y="360" width="298" height="86" rx="43" fill="#FFFBF3" /><rect x="392" y="478" width="220" height="86" rx="43" fill="#FFFBF3" /><rect x="392" y="596" width="94" height="86" rx="43" fill="#FFFBF3" />
+</g>
+<rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#000" stroke-opacity="0.06" stroke-width="2"/></svg>

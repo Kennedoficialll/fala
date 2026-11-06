@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E241B"/><stop offset="1" stop-color="#0F0C09"/></linearGradient>
+<linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="300" y1="200" x2="760" y2="860"><stop offset="0" stop-color="#FFE08A"/><stop offset="0.35" stop-color="#E9AE3A"/><stop offset="0.75" stop-color="#C4861F"/><stop offset="1" stop-color="#8A5A10"/></linearGradient>
+<radialGradient id="hi" cx="0.32" cy="0.22" r="0.55"><stop offset="0" stop-color="#fff" stop-opacity="0.55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<radialGradient id="lo" cx="0.8" cy="0.9" r="0.6"><stop offset="0" stop-color="#3A2205" stop-opacity="0.45"/><stop offset="1" stop-color="#3A2205" stop-opacity="0"/></radialGradient>
+<linearGradient id="hole" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B0806"/><stop offset="1" stop-color="#2A1E12"/></linearGradient>
+<clipPath id="bub"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></clipPath><clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="186" ry="186"/></clipPath>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="28"/></filter>
+<filter id="glow"><feGaussianBlur stdDeviation="60"/></filter>
+</defs>
+<g clip-path="url(#sq)">
+<rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+<circle cx="520" cy="520" r="330" fill="#E9AE3A" opacity="0.18" filter="url(#glow)"/>
+<g transform="translate(0 26)" opacity="0.6" fill="#000" filter="url(#sh)"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></g>
+<g fill="url(#gold)"><circle cx="530" cy="486" r="296"/>
+<path d="M 330 650 C 320 730 292 790 262 832 C 330 836 400 806 452 752 Z"/></g>
+<g clip-path="url(#bub)"><rect x="100" y="100" width="824" height="824" fill="url(#hi)"/><rect x="100" y="100" width="824" height="824" fill="url(#lo)"/></g>
+<rect x="392" y="360" width="298" height="86" rx="43" fill="url(#hole)" /><rect x="392" y="478" width="220" height="86" rx="43" fill="url(#hole)" /><rect x="392" y="596" width="94" height="86" rx="43" fill="url(#hole)" />
+
+</g>
+<rect x="101" y="101" width="822" height="822" rx="185" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="2"/></svg>

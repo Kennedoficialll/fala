@@ -1,54 +1,63 @@
 import AppKit
 import AVFoundation
 
-/// Segure ⌥ (Option) direito, fale, solte: o texto é colado no app em foco.
+/// Segure a tecla escolhida, fale, solte: o texto é colado no app em foco.
 final class Dictation {
-    enum State { case idle, recording, transcribing }
-    var onState: (State) -> Void = { _ in }
     var onError: (String) -> Void = { _ in }
 
-    // ponytail: tecla fixa (keyCode 61 = Option direito); deixar configurável quando alguém pedir
-    static let hotKey: UInt16 = 61
-
+    private let store = Store.shared
     private let file = FileManager.default.temporaryDirectory.appendingPathComponent("fala-ditado.wav")
     private var recorder: AVAudioRecorder?
     private var startedAt = Date()
-    private var monitor: Any?
+    private var monitors: [Any] = []
 
     func start() {
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] e in
-            guard e.keyCode == Self.hotKey else { return }
-            if e.modifierFlags.contains(.option) { self?.begin() } else { self?.end() }
+        let handle: (NSEvent) -> Void = { [weak self] e in
+            guard let self, e.keyCode == self.store.hotKey.code else { return }
+            if e.modifierFlags.contains(self.store.hotKey.flag) { self.begin() } else { self.end() }
         }
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: handle) { monitors.append(m) }
+        // Também quando a janela do Fala está na frente.
+        if let m = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: { handle($0); return $0 }) { monitors.append(m) }
     }
 
+    /// Clique no botão flutuante: começa ou termina o ditado.
+    func toggle() { recorder == nil ? begin() : end() }
+
     private func begin() {
-        guard recorder == nil else { return }
+        guard recorder == nil, !store.meetingRunning else { return }
         guard let r = try? AVAudioRecorder(url: file, settings: Audio.wav16k), r.record() else {
             onError("Não consegui usar o microfone. Libere em Ajustes do Sistema → Privacidade → Microfone.")
             return
         }
         recorder = r
         startedAt = Date()
-        onState(.recording)
+        store.status = .recording
+        if store.saved.sounds { NSSound(named: "Tink")?.play() }
     }
 
     private func end() {
         guard let r = recorder else { return }
         r.stop()
         recorder = nil
-        guard Date().timeIntervalSince(startedAt) > 0.4 else { onState(.idle); return }  // toque acidental
+        let seconds = Date().timeIntervalSince(startedAt)
+        guard seconds > 0.4 else { store.status = .idle; return }  // toque acidental
 
-        onState(.transcribing)
+        store.status = .transcribing
+        let lang = store.saved.language, words = store.saved.words
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let text = try Whisper.text(self.file)
+                let raw = try Whisper.text(self.file, language: lang, words: words)
                 DispatchQueue.main.async {
-                    if !text.isEmpty { Paster.paste(text) }
-                    self.onState(.idle)
+                    if !raw.isEmpty {
+                        Paster.paste(self.store.expandSnippet(raw))
+                        if self.store.saved.sounds { NSSound(named: "Pop")?.play() }
+                        self.store.saved.dictations.insert(DictationEntry(date: Date(), text: raw, seconds: seconds), at: 0)
+                    }
+                    self.store.status = .idle
                 }
             } catch {
-                DispatchQueue.main.async { self.onError(error.localizedDescription); self.onState(.idle) }
+                DispatchQueue.main.async { self.onError(error.localizedDescription); self.store.status = .idle }
             }
         }
     }

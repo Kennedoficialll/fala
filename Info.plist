@@ -6,11 +6,12 @@
     <key>CFBundleDisplayName</key><string>Fala</string>
     <key>CFBundleIdentifier</key><string>io.github.fala</string>
     <key>CFBundleExecutable</key><string>Fala</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>0.1.0</string>
+    <key>CFBundleShortVersionString</key><string>0.2.0</string>
     <key>CFBundleVersion</key><string>1</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>LSUIElement</key><true/>
+    <key>LSUIElement</key><false/>
     <key>NSMicrophoneUsageDescription</key><string>O Fala usa o microfone para transcrever o que você dita. Tudo é processado no seu Mac.</string>
     <key>NSAudioCaptureUsageDescription</key><string>O Fala captura o áudio da reunião para transcrever no seu Mac.</string>
 </dict>

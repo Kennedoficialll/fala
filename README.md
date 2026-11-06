@@ -2,8 +2,11 @@
 
 Ditado e transcrição de reuniões para macOS, **100% no seu Mac**, grátis e sem conta. Usa o [whisper.cpp](https://github.com/ggml-org/whisper.cpp).
 
-- **Ditado:** segure **⌥ Option direito**, fale, solte. O texto aparece onde o cursor estiver, em qualquer app.
+- **Ditado:** segure **⌥ Option direito** (ou outra tecla, nos Ajustes), fale, solte. O texto aparece onde o cursor estiver, em qualquer app.
 - **Reunião:** no menu do Fala, clique em **Transcrever reunião** (Meet, Zoom, Teams, qualquer coisa que toque som). Ao parar, o Fala cria um arquivo em `~/Documents/Fala` separando **Você** (microfone) e **Outros** (som do Mac). O áudio é apagado no final.
+
+- **Janela do Fala:** histórico de tudo que você ditou (com busca), reuniões, **Dicionário** (nomes e termos que ele deve escrever certo), **Atalhos de voz** (fale "meu e-mail" e ele cola o texto completo) e Ajustes (tecla, idioma, sons, modo claro/escuro).
+- **Botões flutuantes:** um filete na beirada esquerda da tela que abre ao passar o mouse, com botões de ditar e de gravar reunião. Clique direito para escolher o microfone, colar o último ditado ou ocultar por 1 hora.
 
 Nenhum áudio ou texto sai do seu computador.
 
@@ -42,6 +45,10 @@ Se você recompilar o app, o macOS pode pedir a Acessibilidade de novo.
 ## Aviso legal
 
 Avise os participantes antes de transcrever uma reunião. Em muitos lugares (no Brasil, pela LGPD) é preciso consentimento. O Fala mostra esse aviso antes de começar.
+
+## Marca
+
+Cores, tipografia, logo e tom de voz estão em [BRAND.md](BRAND.md).
 
 ## Licença
 

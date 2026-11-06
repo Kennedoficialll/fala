@@ -54,9 +54,14 @@ final class Meeting: NSObject, SCStreamOutput {
         queue.sync { systemFile = nil }                 // fecha o WAV
 
         // ponytail: os dois arquivos começam juntos; sem alinhamento fino de relógio, ok para reunião
-        let you = try Whisper.segments(micURL).map { ($0, "Você") }
-        let others = FileManager.default.fileExists(atPath: systemURL.path)
-            ? try Whisper.segments(systemURL).map { ($0, "Outros") } : []
+        let lang = Store.shared.saved.language, words = Store.shared.saved.words
+        let (micURL, systemURL) = (self.micURL, self.systemURL)
+        let (you, others) = try await Task.detached(priority: .userInitiated) {
+            let you = try Whisper.segments(micURL, language: lang, words: words).map { ($0, "Você") }
+            let others = FileManager.default.fileExists(atPath: systemURL.path)
+                ? try Whisper.segments(systemURL, language: lang, words: words).map { ($0, "Outros") } : []
+            return (you, others)
+        }.value
         let lines = (you + others).sorted { $0.0.start < $1.0.start }
             .map { "**[\(Self.clock($0.0.start))] \($0.1):** \($0.0.text)" }
 
