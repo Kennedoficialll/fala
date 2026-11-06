@@ -80,6 +80,6 @@ enum Whisper {
     static func isHallucination(_ t: String) -> Bool {
         let s = t.lowercased()
         return s.hasPrefix("[") || s.hasPrefix("(") || s.contains("amara.org") || s.contains("zanotto")
-            || s.contains("inscreva-se no canal") || s.contains("obrigado por assistir")
+            || ["música", "música.", "♪"].contains(s) || s.contains("inscreva-se no canal") || s.contains("obrigado por assistir")
     }
 }

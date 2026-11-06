@@ -765,6 +765,25 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(title: "IA de resumo") {
+                SettingsRow(title: "Qwen3 4B", detail: "Resumo e perguntas sobre reuniões, no seu Mac. 2,5 GB, uma vez só.") {
+                    if LLM.hasModel {
+                        HStack(spacing: 6) {
+                            Circle().fill(Color.green).frame(width: 7, height: 7)
+                            Text("Pronto")
+                        }
+                        .font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.ink)
+                    } else if store.llmDownloading {
+                        HStack(spacing: 8) {
+                            ProgressView().controlSize(.small)
+                            Text("Baixando…").font(.system(size: 13)).foregroundStyle(Theme.muted)
+                        }
+                    } else {
+                        PrimaryButton(title: "Baixar", icon: "arrow.down") { store.downloadLLM() }
+                    }
+                }
+            }
+
             SettingsGroup(title: "Permissões") {
                 SettingsRow(title: "Microfone", detail: "Para ouvir o que você dita.") { OpenButton(pane: "Privacy_Microphone") }
                 Divider().overlay(Theme.line)

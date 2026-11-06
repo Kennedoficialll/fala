@@ -2,8 +2,9 @@ import AppKit
 import AVFoundation
 import Combine
 import SwiftUI
+import ScreenCaptureKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let store = Store.shared
     private let status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let dictation = Dictation()
@@ -11,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let meetingItem = NSMenuItem(title: "Transcrever reunião", action: #selector(toggleMeeting), keyEquivalent: "")
     private let modelItem = NSMenuItem(title: "", action: #selector(downloadModel), keyEquivalent: "")
     private var window: NSWindow!
+    private var meetingWindow: NSWindow!
     private var pill: NSPanel!
     private var dock: NSPanel!
     private let dockItem = NSMenuItem(title: "", action: #selector(toggleDock), keyEquivalent: "")
@@ -20,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         buildMainMenu()
         buildStatusMenu()
         buildWindow()
+        buildMeetingWindow()
         buildPill()
         buildDock()
 
@@ -29,6 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         store.toggleMeeting = { [weak self] in self?.toggleMeeting() }
         store.toggleDictation = { [weak self] in self?.dictation.toggle() }
+        store.summarize = { [weak self] in self?.summarize() }
+        store.ask = { [weak self] q in self?.ask(q) }
+        store.downloadLLM = { [weak self] in self?.downloadLLM() }
         store.open = { [weak self] screen in
             self?.store.screen = screen
             self?.showWindow()
@@ -43,7 +49,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .store(in: &bag)
 
         store.$saved.map(\.dark).removeDuplicates().receive(on: RunLoop.main)
-            .sink { [weak self] dark in self?.window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua) }
+            .sink { [weak self] dark in
+                let look = NSAppearance(named: dark ? .darkAqua : .aqua)
+                self?.window.appearance = look
+                self?.meetingWindow.appearance = look
+            }
             .store(in: &bag)
 
         dictation.onError = { [weak self] in self?.alert($0) }
@@ -206,21 +216,123 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if store.meetingRunning {
                     store.meetingBusy = true
                     store.meetingRunning = false
-                    store.meetingStartedAt = nil
-                    let file = try await meeting.stop()
-                    NSWorkspace.shared.open(file)
+                    _ = try await meeting.stop()
+                    store.meetingBusy = false
+                    if LLM.hasModel && !store.live.isEmpty { summarize() }
                 } else {
                     guard confirmConsent() else { return }
+                    store.live = []; store.notes = ""; store.meetingTitle = ""
+                    store.summary = ""; store.answer = ""; store.meetingFile = nil
+                    showMeetingWindow()
+                    store.meetingPreparing = true
+                    defer { store.meetingPreparing = false }
                     try await meeting.start()
                     store.meetingStartedAt = Date()
                     store.meetingRunning = true
                 }
+            } catch let e as SCStreamError where e.code == .userDeclined {
+                Servers.whisper.stop()
+                store.meetingRunning = false
+                askPermission("Para transcrever reuniões, o Fala precisa ouvir o som do Mac.",
+                              detail: "Em Ajustes do Sistema → Privacidade e Segurança → Gravação de Tela e Áudio do Sistema, ative o Fala. Depois feche e abra o Fala de novo.",
+                              pane: "Privacy_ScreenCapture")
             } catch {
+                Servers.whisper.stop()
                 store.meetingRunning = false
                 alert(error.localizedDescription)
             }
             store.meetingBusy = false
         }
+    }
+
+    // MARK: janela da reunião e IA
+
+    private func buildMeetingWindow() {
+        meetingWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 820),
+                                 styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                                 backing: .buffered, defer: false)
+        meetingWindow.title = "Reunião"
+        meetingWindow.titleVisibility = .hidden
+        meetingWindow.titlebarAppearsTransparent = true
+        meetingWindow.isMovableByWindowBackground = true
+        meetingWindow.isReleasedWhenClosed = false
+        meetingWindow.delegate = self
+        meetingWindow.contentViewController = NSHostingController(rootView: MeetingPanel().environmentObject(store))
+        if let f = NSScreen.main?.visibleFrame {   // encosta na direita, como um painel
+            let h = min(820, f.height - 40)
+            meetingWindow.setFrame(NSRect(x: f.maxX - 490, y: f.midY - h / 2, width: 470, height: h), display: false)
+        }
+    }
+
+    private func showMeetingWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        meetingWindow.makeKeyAndOrderFront(nil)
+    }
+
+    func windowWillClose(_ n: Notification) {
+        // Sem reunião rolando, a IA de texto não precisa ficar ocupando memória.
+        if (n.object as? NSWindow) == meetingWindow, !store.meetingRunning, !store.summarizing, !store.asking {
+            Servers.llama.stop()
+        }
+    }
+
+    func applicationWillTerminate(_ n: Notification) {
+        Servers.whisper.stop()
+        Servers.llama.stop()
+    }
+
+    private func summarize() {
+        guard LLM.hasModel, !store.live.isEmpty, !store.summarizing else { return }
+        store.summarizing = true
+        let text = store.transcriptText
+        Task.detached(priority: .userInitiated) {
+            let result = Result { try LLM.summary(text) }
+            await MainActor.run {
+                switch result {
+                case .success(let s): self.store.summary = s
+                case .failure(let e): self.store.summary = "Não consegui gerar o resumo: \(e.localizedDescription)"
+                }
+                self.store.summarizing = false
+                if !self.store.meetingRunning { try? self.meeting.save() }
+            }
+        }
+    }
+
+    private func ask(_ question: String) {
+        guard LLM.hasModel, !store.asking, !store.live.isEmpty else { return }
+        store.asking = true
+        store.answer = ""
+        let text = store.transcriptText
+        Task.detached(priority: .userInitiated) {
+            let result = Result { try LLM.ask(question, transcript: text) }
+            await MainActor.run {
+                switch result {
+                case .success(let s): self.store.answer = s
+                case .failure(let e): self.store.answer = "Não consegui responder: \(e.localizedDescription)"
+                }
+                self.store.asking = false
+            }
+        }
+    }
+
+    private func downloadLLM() {
+        guard !LLM.hasModel, !store.llmDownloading else { return }
+        store.llmDownloading = true
+        URLSession.shared.downloadTask(with: LLM.modelDownload) { tmp, resp, err in
+            var failure = err?.localizedDescription
+            if let tmp, (resp as? HTTPURLResponse)?.statusCode == 200 {
+                do {
+                    try FileManager.default.createDirectory(at: LLM.modelURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try FileManager.default.moveItem(at: tmp, to: LLM.modelURL)
+                } catch { failure = error.localizedDescription }
+            } else if failure == nil {
+                failure = "O download da IA de resumo falhou."
+            }
+            DispatchQueue.main.async {
+                self.store.llmDownloading = false
+                if let failure { self.alert(failure) }
+            }
+        }.resume()
     }
 
     private func confirmConsent() -> Bool {
@@ -257,6 +369,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshModelItem() {
         modelItem.title = Whisper.hasModel ? "Modelo do Whisper: pronto" : "Baixar modelo do Whisper (≈550 MB)"
         modelItem.isEnabled = !Whisper.hasModel
+    }
+
+    private func askPermission(_ title: String, detail: String, pane: String) {
+        let a = NSAlert()
+        a.messageText = title
+        a.informativeText = detail
+        a.addButton(withTitle: "Abrir Ajustes")
+        a.addButton(withTitle: "Agora não")
+        NSApp.activate(ignoringOtherApps: true)
+        if a.runModal() == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)")!)
+        }
     }
 
     private func alert(_ text: String) {

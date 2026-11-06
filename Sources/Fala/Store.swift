@@ -64,6 +64,25 @@ final class Store: ObservableObject {
     @Published var screen: Screen = .dictation
     @Published var dockExpanded = false
 
+    // Reunião ao vivo
+    @Published var live: [LiveLine] = []
+    @Published var notes = ""
+    @Published var meetingTitle = ""
+    @Published var meetingPreparing = false
+    @Published var meetingFile: URL?
+    @Published var summary = ""
+    @Published var summarizing = false
+    @Published var answer = ""
+    @Published var asking = false
+    @Published var llmDownloading = false
+    var summarize: () -> Void = {}
+    var ask: (String) -> Void = { _ in }
+    var downloadLLM: () -> Void = {}
+
+    var transcriptText: String {
+        live.map { "[\(Meeting.clock($0.start))] \($0.speaker): \($0.text)" }.joined(separator: "\n")
+    }
+
     static let hotKeys = [
         HotKey(code: 61, name: "⌥ Option direito", flag: .option),
         HotKey(code: 54, name: "⌘ Command direito", flag: .command),
